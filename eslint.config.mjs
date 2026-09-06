@@ -1,35 +1,36 @@
 // @ts-check
-import eslint from '@eslint/js';
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+// Google TypeScript Style (gts) + ajustements NestJS.
+import {createRequire} from 'node:module';
 import globals from 'globals';
-import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+const require = createRequire(import.meta.url);
+const gts = require('gts/build/eslint.config.js');
+
+export default [
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'coverage/**',
+      'prisma/generated/**',
+    ],
   },
-  eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
-  eslintPluginPrettierRecommended,
+  ...gts,
   {
     languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest,
-      },
-      sourceType: 'commonjs',
+      globals: {...globals.node, ...globals.jest},
       parserOptions: {
-        projectService: true,
+        project: './tsconfig.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },
-  },
-  {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      "prettier/prettier": ["error", { endOfLine: "auto" }],
+      // NestJS: décorateurs & DI ne « lisent » pas les paramètres au sens ESLint.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {argsIgnorePattern: '^_', varsIgnorePattern: '^_'},
+      ],
+      // Nest utilise les décorateurs expérimentaux, gts n'y touche pas mais on documente ici.
     },
   },
-);
+];
