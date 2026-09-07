@@ -19,7 +19,7 @@ FROM node:22-alpine AS prod-deps
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
-RUN npm ci --omit=dev --no-audit --no-fund && npx prisma generate
+RUN npm ci --omit=dev --no-audit --no-fund --ignore-scripts && npx prisma generate
 
 # ---- runtime (minimal, non-root) ----
 FROM node:22-alpine AS runtime

@@ -1,9 +1,9 @@
-name: kanso-mdm-dev
+name: kanso-mdm
 
 services:
   db:
     image: postgres:16-alpine
-    container_name: kanso-mdm-db-dev
+    container_name: kanso-mdm-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -12,7 +12,7 @@ services:
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
-      - db_data_dev:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 5s
@@ -23,27 +23,36 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile.dev
-    container_name: kanso-mdm-app-dev
+      dockerfile: Dockerfile
+    container_name: kanso-mdm-app
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-production}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
       PORT: ${APP_PORT:-3000}
-      CHOKIDAR_USEPOLLING: 'true'
     ports:
       - '${APP_PORT:-3000}:3000'
-    volumes:
-      - .:/app
-      - /app/node_modules
     networks: [backend]
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
 
-  # ponytail: adminer only via `--profile tools`, pas en dev par défaut
+  # ponytail: adminer only via `--profile tools`, pas en prod
   adminer:
     image: adminer:4
-    container_name: kanso-mdm-adminer-dev
+    container_name: kanso-mdm-adminer
     profiles: [tools]
     ports:
       - '8080:8080'
@@ -53,9 +62,9 @@ services:
     networks: [backend]
 
 volumes:
-  db_data_dev:
-    name: kanso-mdm-db-data-dev
+  db_data:
+    name: kanso-mdm-db-data
 
 networks:
   backend:
-    name: kanso-mdm-net-dev
+    name: kanso-mdm-net

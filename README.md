@@ -27,21 +27,47 @@
 
 ## Project setup
 
+Prérequis : Node 22, Docker.
+
 ```bash
+$ cp .env.example .env
 $ npm install
 ```
 
-## Compile and run the project
+## Lancer le projet
+
+### Avec Docker (recommandé)
+
+Deux profils, deux fichiers compose distincts :
+
+- **`docker-compose.yml`** (défaut, sans `-f`) → **dev** : hot-reload (`nest start --watch`), code monté en volume, DB Postgres incluse.
+- **`docker-compose.prod.yml`** → **prod** : build compilé (`nest build` → `node dist/main`), image figée, doit être appelé explicitement avec `-f`.
 
 ```bash
-# development
-$ npm run start
+# dev (par défaut)
+$ docker compose up -d --build   # build + démarre en arrière-plan
+$ docker compose logs -f         # suit les logs
+$ docker compose down            # stoppe
 
-# watch mode
-$ npm run start:dev
+# prod (explicite)
+$ docker compose -f docker-compose.prod.yml up -d --build
+$ docker compose -f docker-compose.prod.yml logs -f
+$ docker compose -f docker-compose.prod.yml down
+```
 
-# production mode
-$ npm run start:prod
+Sans `-f` (ou via les scripts `docker:*` sans `:prod`), Docker Compose prend `docker-compose.yml` = **dev**. Pour cibler la prod, il faut préciser `-f docker-compose.prod.yml` (ou utiliser les scripts `docker:prod:*` équivalents).
+
+Les deux profils exposent l'app sur le même port par défaut (`APP_PORT`, 3000) et Postgres sur le même port (`POSTGRES_PORT`, 5432) : un seul des deux à la fois, sauf si tu changes ces variables dans `.env`.
+
+### En local (sans Docker)
+
+```bash
+$ docker compose up -d db   # démarre juste Postgres via Docker
+$ npm run start:dev         # NestJS en watch mode
+
+# autres modes
+$ npm run start        # development, sans watch
+$ npm run start:prod   # nécessite un build préalable (npm run build)
 ```
 
 ## Run tests
