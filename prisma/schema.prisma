@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Aidant {
+model Helper {
   id           String   @id @default(uuid())
   email        String   @unique
   passwordHash String

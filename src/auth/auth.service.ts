@@ -1,8 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {ConflictException, Injectable} from '@nestjs/common';
 import * as argon2 from 'argon2';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { SignupDto } from './dto/signup.dto';
+import {Prisma} from '@prisma/client';
+import {PrismaService} from '../prisma/prisma.service';
+import {SignupDto} from './dto/signup.dto';
 
 const PRISMA_UNIQUE_CONSTRAINT_ERROR_CODE = 'P2002';
 
@@ -16,7 +16,7 @@ export class AuthService {
     });
 
     try {
-      const aidant = await this.prisma.aidant.create({
+      const helper = await this.prisma.helper.create({
         data: {
           email: dto.email,
           passwordHash,
@@ -28,7 +28,7 @@ export class AuthService {
         },
       });
 
-      return aidant;
+      return helper;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
