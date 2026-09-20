@@ -13,4 +13,26 @@ model Helper {
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  // AES-256-GCM encrypted base32 secret
+  totpSecretEncrypted String?
+  totpEnabled         Boolean   @default(false)
+  // Last accepted 30s time step
+  totpLastUsedStep    Int?
+  mfaFailedAttempts   Int       @default(0)
+  mfaLockedUntil      DateTime?
+
+  recoveryCodes RecoveryCode[]
+}
+
+model RecoveryCode {
+  id        String    @id @default(uuid())
+  helperId  String
+  helper    Helper    @relation(fields: [helperId], references: [id], onDelete: Cascade)
+  // Keyed HMAC of the code, never the code itself.
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([helperId, codeHash])
 }
