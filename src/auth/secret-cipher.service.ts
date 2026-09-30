@@ -19,7 +19,8 @@ const deriveKey = (masterKey: Buffer, purpose: string): Buffer =>
 @Injectable()
 export class SecretCipherService {
   private readonly encryptionKey: Buffer;
-  private readonly hmacKey: Buffer;
+  private readonly recoveryCodeHmacKey: Buffer;
+  private readonly sessionTokenHmacKey: Buffer;
 
   constructor() {
     const masterKey = Buffer.from(
@@ -32,7 +33,8 @@ export class SecretCipherService {
       );
     }
     this.encryptionKey = deriveKey(masterKey, 'totp-secret-encryption');
-    this.hmacKey = deriveKey(masterKey, 'recovery-code-hmac');
+    this.recoveryCodeHmacKey = deriveKey(masterKey, 'recovery-code-hmac');
+    this.sessionTokenHmacKey = deriveKey(masterKey, 'session-token-hmac');
   }
 
   encrypt(plaintext: string): string {
@@ -67,10 +69,15 @@ export class SecretCipherService {
     ]).toString('utf8');
   }
 
-  // Keyed, so a leaked database alone doesn't allow brute-forcing the codes.
   hashRecoveryCode(normalizedCode: string): string {
-    return createHmac('sha256', this.hmacKey)
+    return createHmac('sha256', this.recoveryCodeHmacKey)
       .update(normalizedCode)
+      .digest('hex');
+  }
+
+  hashSessionToken(rawToken: string): string {
+    return createHmac('sha256', this.sessionTokenHmacKey)
+      .update(rawToken)
       .digest('hex');
   }
 }

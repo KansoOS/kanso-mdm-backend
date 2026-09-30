@@ -12,6 +12,7 @@ import {LoginDto} from './dto/login.dto';
 import {MfaLoginDto} from './dto/mfa-login.dto';
 import {MfaRecoveryDto} from './dto/mfa-recovery.dto';
 import {SignupDto} from './dto/signup.dto';
+import {SessionService} from './session.service';
 import {TokenPayload, TokenPurpose} from './token-purpose';
 import {TotpService} from './totp.service';
 import {Logger} from 'tslog';
@@ -32,6 +33,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly totpService: TotpService,
+    private readonly sessionService: SessionService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -56,28 +58,29 @@ export class AuthService {
       return {mfaRequired: true as const, mfaToken};
     }
 
-    return this.issueAccessToken(helper.id);
+    return this.issueTokens(helper.id);
   }
 
   async loginWithTotp(dto: MfaLoginDto) {
     const helperId = await this.verifyMfaToken(dto.mfaToken);
     await this.totpService.verifyLoginCode(helperId, dto.code);
-    return this.issueAccessToken(helperId);
+    return this.issueTokens(helperId);
   }
 
   async loginWithRecoveryCode(dto: MfaRecoveryDto) {
     const helperId = await this.verifyMfaToken(dto.mfaToken);
     await this.totpService.verifyRecoveryCode(helperId, dto.recoveryCode);
-    return this.issueAccessToken(helperId);
+    return this.issueTokens(helperId);
   }
 
-  private async issueAccessToken(helperId: string) {
+  private async issueTokens(helperId: string) {
     const accessToken = await this.jwtService.signAsync({
       sub: helperId,
       purpose: TokenPurpose.ACCESS,
     });
+    const sessionToken = await this.sessionService.create(helperId);
     logger.info('Helper logged in: ' + helperId);
-    return {accessToken};
+    return {accessToken, sessionToken};
   }
 
   private async verifyMfaToken(mfaToken: string): Promise<string> {
