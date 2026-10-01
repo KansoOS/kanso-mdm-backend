@@ -2,7 +2,6 @@ import {Module} from '@nestjs/common';
 import {JwtModule} from '@nestjs/jwt';
 import {AuthController} from './auth.controller';
 import {AuthService} from './auth.service';
-import {MeController} from './me.controller';
 import {SecretCipherService} from './secret-cipher.service';
 import {SessionAuthGuard} from './session-auth.guard';
 import {SessionService} from './session.service';
@@ -26,7 +25,7 @@ const JWT_SECRET_MIN_LENGTH = 32;
       },
     }),
   ],
-  controllers: [AuthController, MeController, TotpController],
+  controllers: [AuthController, TotpController],
   providers: [
     AuthService,
     TotpService,

@@ -73,23 +73,6 @@ export class AuthService {
     return this.issueTokens(helperId);
   }
 
-  async getCurrentHelper(helperId: string) {
-    const helper = await this.prisma.helper.findUnique({
-      where: {id: helperId},
-      select: {
-        id: true,
-        email: true,
-        createdAt: true,
-      },
-    });
-
-    if (!helper) {
-      throw new UnauthorizedException('Unknown account.');
-    }
-
-    return helper;
-  }
-
   private async issueTokens(helperId: string) {
     const accessToken = await this.jwtService.signAsync({
       sub: helperId,
