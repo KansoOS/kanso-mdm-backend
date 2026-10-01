@@ -23,6 +23,7 @@ model Helper {
   mfaLockedUntil      DateTime?
 
   recoveryCodes RecoveryCode[]
+  sessions      Session[]
 }
 
 model RecoveryCode {
@@ -35,4 +36,15 @@ model RecoveryCode {
   createdAt DateTime  @default(now())
 
   @@unique([helperId, codeHash])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  helperId  String
+  helper    Helper   @relation(fields: [helperId], references: [id], onDelete: Cascade)
+  // Keyed HMAC of the cookie value, never the raw token.
+  tokenHash String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  lastActivityAt DateTime @default(now())
 }
