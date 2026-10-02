@@ -7,32 +7,66 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Helper {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // AES-256-GCM encrypted base32 secret
-  totpSecretEncrypted String?
-  totpEnabled         Boolean   @default(false)
-  // Last accepted 30s time step
-  totpLastUsedStep    Int?
-  mfaFailedAttempts   Int       @default(0)
-  mfaLockedUntil      DateTime?
-
-  recoveryCodes RecoveryCode[]
+model Space {
+  id           String        @id @default(uuid())
+  displayName  String?
+  createdAt    DateTime      @default(now())
+  devices      Device[]
+  policies     Policy[]
+  pairingCodes PairingCode[]
 }
 
-model RecoveryCode {
+model PairingCode {
   id        String    @id @default(uuid())
-  helperId  String
-  helper    Helper    @relation(fields: [helperId], references: [id], onDelete: Cascade)
-  // Keyed HMAC of the code, never the code itself.
-  codeHash  String
+  codeHash  String    @unique
+  expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
+  spaceId   String
+  space     Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 
-  @@unique([helperId, codeHash])
+  @@index([spaceId, expiresAt])
+}
+
+model Device {
+  id                   String        @id @default(uuid())
+  name                 String?
+  tokenHash            String        @unique
+  pushTopic            String        @unique
+  appliedPolicyVersion Int           @default(0)
+  lastSyncAt           DateTime?
+  revokedAt            DateTime?
+  createdAt            DateTime      @default(now())
+  spaceId              String
+  space                Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  events               DeviceEvent[]
+
+  @@index([spaceId, revokedAt])
+}
+
+model Policy {
+  id        String   @id @default(uuid())
+  version   Int
+  content   Json
+  createdAt DateTime @default(now())
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@unique([spaceId, version])
+  @@index([spaceId, createdAt])
+}
+
+model DeviceEvent {
+  id            String   @id @default(uuid())
+  eventId       String
+  type          String
+  occurredAt    DateTime
+  receivedAt    DateTime @default(now())
+  policyVersion Int?
+  deviceId      String
+  device        Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, eventId])
+  @@index([deviceId, occurredAt])
+  @@index([type, occurredAt])
 }
