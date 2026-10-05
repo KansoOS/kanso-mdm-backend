@@ -6,3 +6,67 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Space {
+  id           String        @id @default(uuid())
+  displayName  String?
+  createdAt    DateTime      @default(now())
+  devices      Device[]
+  policies     Policy[]
+  pairingCodes PairingCode[]
+}
+
+model PairingCode {
+  id        String    @id @default(uuid())
+  codeHash  String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  spaceId   String
+  space     Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@index([spaceId, expiresAt])
+}
+
+model Device {
+  id                   String        @id @default(uuid())
+  name                 String?
+  tokenHash            String        @unique
+  pushTopic            String        @unique
+  appliedPolicyVersion Int           @default(0)
+  lastSyncAt           DateTime?
+  revokedAt            DateTime?
+  createdAt            DateTime      @default(now())
+  spaceId              String
+  space                Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  events               DeviceEvent[]
+
+  @@index([spaceId, revokedAt])
+}
+
+model Policy {
+  id        String   @id @default(uuid())
+  version   Int
+  content   Json
+  createdAt DateTime @default(now())
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@unique([spaceId, version])
+  @@index([spaceId, createdAt])
+}
+
+model DeviceEvent {
+  id            String   @id @default(uuid())
+  eventId       String
+  type          String
+  occurredAt    DateTime
+  receivedAt    DateTime @default(now())
+  policyVersion Int?
+  deviceId      String
+  device        Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, eventId])
+  @@index([deviceId, occurredAt])
+  @@index([type, occurredAt])
+}

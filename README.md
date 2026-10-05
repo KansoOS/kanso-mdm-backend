@@ -34,6 +34,15 @@ $ cp .env.example .env
 $ npm install
 ```
 
+Deux secrets sont obligatoires dans `.env` : l'app refuse de démarrer tant qu'ils ne sont pas remplacés (les valeurs `change_me` de l'exemple sont volontairement invalides).
+
+```bash
+$ openssl rand -base64 48   # JWT_SECRET (32 caractères minimum)
+$ openssl rand -base64 32   # TOTP_ENCRYPTION_KEY (exactement 32 octets en base64)
+```
+
+`TOTP_ENCRYPTION_KEY` chiffre les secrets TOTP et sert à hacher les codes de secours : la perdre ou la changer bloque la connexion de tous les comptes ayant activé le TOTP (secrets et codes de secours deviennent illisibles). Il n'y a pas de rotation de clé pour l'instant.
+
 ## Lancer le projet
 
 ### Avec Docker (recommandé)
