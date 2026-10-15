@@ -35,7 +35,10 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
-      PORT: ${APP_PORT:-3000}
+      # Port d'écoute interne : toujours 3000, indépendamment du port publié
+      # ci-dessous (sinon changer APP_PORT ferait écouter l'appli sur un port
+      # différent du côté conteneur de ce mapping, et plus rien ne répondrait).
+      PORT: 3000
       CHOKIDAR_USEPOLLING: 'true'
     ports:
       - '${APP_PORT:-3000}:3000'
