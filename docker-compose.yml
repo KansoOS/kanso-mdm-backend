@@ -1,9 +1,11 @@
+# Nom de projet par défaut ; override avec `COMPOSE_PROJECT_NAME=...` pour
+# faire tourner une deuxième instance isolée en parallèle (conteneurs, volume
+# et réseau sont dérivés de ce nom, donc pas de collision — voir KansoOS/Makefile).
 name: kanso-mdm-dev
 
 services:
   db:
     image: postgres:16-alpine
-    container_name: kanso-mdm-db-dev
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -24,7 +26,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: kanso-mdm-app-dev
     depends_on:
       db:
         condition: service_healthy
@@ -46,7 +47,6 @@ services:
   # ponytail: adminer only via `--profile tools`, pas en dev par défaut
   adminer:
     image: adminer:4
-    container_name: kanso-mdm-adminer-dev
     profiles: [tools]
     ports:
       - '8080:8080'
@@ -57,8 +57,6 @@ services:
 
 volumes:
   db_data_dev:
-    name: kanso-mdm-db-data-dev
 
 networks:
   backend:
-    name: kanso-mdm-net-dev
