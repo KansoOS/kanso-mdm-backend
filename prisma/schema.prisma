@@ -24,6 +24,7 @@ model Helper {
 
   recoveryCodes RecoveryCode[]
   sessions      Session[]
+  spaceMemberships SpaceMembership[]
 }
 
 model RecoveryCode {
@@ -47,4 +48,28 @@ model Session {
   createdAt DateTime @default(now())
   expiresAt DateTime
   lastActivityAt DateTime @default(now())
+}
+
+model Space {
+  id        String   @id @default(uuid())
+  // No full name or diagnostic field by design: only a pseudonym, chosen
+  // freely by whoever creates the space.
+  pseudonym String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships SpaceMembership[]
+}
+
+// Join table: a space can have several helpers, a helper can be in several
+// spaces (many-to-many).
+model SpaceMembership {
+  id        String   @id @default(uuid())
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  helperId  String
+  helper    Helper   @relation(fields: [helperId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([spaceId, helperId])
 }
