@@ -8,11 +8,11 @@ import {
 } from '@nestjs/common';
 import {TotpCodeDto} from './dto/totp-code.dto';
 import {HelperId} from './helper-id.decorator';
-import {JwtAuthGuard} from './jwt-auth.guard';
+import {SessionAuthGuard} from './session-auth.guard';
 import {TotpService} from './totp.service';
 
 @Controller('auth/totp')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionAuthGuard)
 export class TotpController {
   constructor(private readonly totpService: TotpService) {}
 
