@@ -34,5 +34,6 @@ const JWT_SECRET_MIN_LENGTH = 32;
     SessionService,
     SessionAuthGuard,
   ],
+  exports: [SessionAuthGuard, SessionService],
 })
 export class AuthModule {}
