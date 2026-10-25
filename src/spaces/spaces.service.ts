@@ -84,4 +84,42 @@ export class SpacesService {
       throw error;
     }
   }
+
+  async updateDeviceForHelper(
+    helperId: string,
+    spaceId: string,
+    deviceId: string,
+    pseudonym: string,
+  ) {
+    const device = await this.prisma.device.findFirst({
+      where: {
+        id: deviceId,
+        spaceId,
+        space: {memberships: {some: {helperId}}},
+      },
+      select: {id: true},
+    });
+
+    if (!device) {
+      return null;
+    }
+
+    try {
+      return await this.prisma.device.update({
+        where: {id: device.id},
+        data: {pseudonym},
+        select: DEVICE_SELECT,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'A device with this pseudonym already exists in this space.',
+        );
+      }
+      throw error;
+    }
+  }
 }
