@@ -62,6 +62,7 @@ model Space {
 
   memberships SpaceMembership[]
   mandates    Mandate[]
+  devices     Device[]
 }
 
 // Join table: a space can have several helpers, a helper can be in several
@@ -75,6 +76,24 @@ model SpaceMembership {
   createdAt DateTime @default(now())
 
   @@unique([spaceId, helperId])
+}
+
+enum DeviceStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+}
+
+model Device {
+  id        String       @id @default(uuid())
+  spaceId   String
+  space     Space        @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  pseudonym String
+  status    DeviceStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([spaceId, pseudonym])
 }
 
 // "Objet central du projet" (modelé sur Aidants Connect) : ce qu'un aidant
