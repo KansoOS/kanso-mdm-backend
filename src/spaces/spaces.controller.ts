@@ -25,12 +25,30 @@ export class SpacesController {
     return this.spacesService.create(helperId, dto);
   }
 
-  @Get(':id')
-  async findOne(@HelperId() helperId: string, @Param('id') id: string) {
-    const space = await this.spacesService.findForHelper(helperId, id);
+  @Get(':spaceId')
+  async findOne(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+  ) {
+    const space = await this.spacesService.findForHelper(helperId, spaceId);
     if (!space) {
       throw new NotFoundException('Space not found.');
     }
     return space;
+  }
+
+  @Get(':spaceId/devices')
+  async findDevices(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+  ) {
+    const devices = await this.spacesService.findDevicesForHelper(
+      helperId,
+      spaceId,
+    );
+    if (!devices) {
+      throw new NotFoundException('Space not found.');
+    }
+    return devices;
   }
 }
