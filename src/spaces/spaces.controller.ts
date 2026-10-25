@@ -6,6 +6,7 @@ import {
   HttpStatus,
   NotFoundException,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -13,6 +14,7 @@ import {HelperId} from '../auth/helper-id.decorator';
 import {SessionAuthGuard} from '../auth/session-auth.guard';
 import {CreateDeviceDto} from './dto/create-device.dto';
 import {CreateSpaceDto} from './dto/create-space.dto';
+import {UpdateDeviceDto} from './dto/update-device.dto';
 import {SpacesService} from './spaces.service';
 
 @Controller('spaces')
@@ -69,5 +71,24 @@ export class SpacesController {
       throw new NotFoundException('Space not found.');
     }
     return devices;
+  }
+
+  @Patch(':spaceId/devices/:deviceId')
+  async updateDevice(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+    @Param('deviceId') deviceId: string,
+    @Body() dto: UpdateDeviceDto,
+  ) {
+    const device = await this.spacesService.updateDeviceForHelper(
+      helperId,
+      spaceId,
+      deviceId,
+      dto.pseudonym,
+    );
+    if (!device) {
+      throw new NotFoundException('Device not found.');
+    }
+    return device;
   }
 }
