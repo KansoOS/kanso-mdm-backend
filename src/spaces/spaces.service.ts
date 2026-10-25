@@ -1,4 +1,5 @@
-import {Injectable} from '@nestjs/common';
+import {ConflictException, Injectable} from '@nestjs/common';
+import {Prisma} from '@prisma/client';
 import {PrismaService} from '../prisma/prisma.service';
 import {CreateSpaceDto} from './dto/create-space.dto';
 
@@ -47,5 +48,40 @@ export class SpacesService {
       orderBy: {createdAt: 'asc'},
       select: DEVICE_SELECT,
     });
+  }
+
+  async createDeviceForHelper(
+    helperId: string,
+    spaceId: string,
+    pseudonym: string,
+  ) {
+    const space = await this.prisma.space.findFirst({
+      where: {id: spaceId, memberships: {some: {helperId}}},
+      select: {id: true},
+    });
+
+    if (!space) {
+      return null;
+    }
+
+    try {
+      return await this.prisma.device.create({
+        data: {
+          spaceId: space.id,
+          pseudonym,
+        },
+        select: DEVICE_SELECT,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'A device with this pseudonym already exists in this space.',
+        );
+      }
+      throw error;
+    }
   }
 }
