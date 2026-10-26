@@ -24,4 +24,20 @@ export class SpacesService {
       select: SPACE_SELECT,
     });
   }
+
+  async isMember(helperId: string, spaceId: string): Promise<boolean> {
+    const membership = await this.prisma.spaceMembership.findUnique({
+      where: {spaceId_helperId: {spaceId, helperId}},
+      select: {id: true},
+    });
+    return membership !== null;
+  }
+
+  async ensureMember(helperId: string, spaceId: string): Promise<void> {
+    await this.prisma.spaceMembership.upsert({
+      where: {spaceId_helperId: {spaceId, helperId}},
+      create: {spaceId, helperId},
+      update: {},
+    });
+  }
 }
