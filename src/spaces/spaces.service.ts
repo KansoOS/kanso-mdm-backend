@@ -122,4 +122,29 @@ export class SpacesService {
       throw error;
     }
   }
+
+  async revokeDeviceForHelper(
+    helperId: string,
+    spaceId: string,
+    deviceId: string,
+  ) {
+    const device = await this.prisma.device.findFirst({
+      where: {
+        id: deviceId,
+        spaceId,
+        space: {memberships: {some: {helperId}}},
+      },
+      select: {id: true},
+    });
+
+    if (!device) {
+      return null;
+    }
+
+    return this.prisma.device.update({
+      where: {id: device.id},
+      data: {status: 'REVOKED'},
+      select: DEVICE_SELECT,
+    });
+  }
 }

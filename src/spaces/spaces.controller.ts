@@ -91,4 +91,21 @@ export class SpacesController {
     }
     return device;
   }
+
+  @Post(':spaceId/devices/:deviceId/revoke')
+  async revokeDevice(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+    @Param('deviceId') deviceId: string,
+  ) {
+    const device = await this.spacesService.revokeDeviceForHelper(
+      helperId,
+      spaceId,
+      deviceId,
+    );
+    if (!device) {
+      throw new NotFoundException('Device not found.');
+    }
+    return device;
+  }
 }
