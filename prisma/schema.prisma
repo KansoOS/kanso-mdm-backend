@@ -25,6 +25,8 @@ model Helper {
   recoveryCodes RecoveryCode[]
   sessions      Session[]
   spaceMemberships SpaceMembership[]
+  mandates         Mandate[] @relation("MandateHolder")
+  revokedMandates  Mandate[] @relation("MandateRevokedBy")
 }
 
 model RecoveryCode {
@@ -59,6 +61,7 @@ model Space {
   updatedAt DateTime @updatedAt
 
   memberships SpaceMembership[]
+  mandates    Mandate[]
 }
 
 // Join table: a space can have several helpers, a helper can be in several
@@ -72,4 +75,29 @@ model SpaceMembership {
   createdAt DateTime @default(now())
 
   @@unique([spaceId, helperId])
+}
+
+// "Objet central du projet" (modelé sur Aidants Connect) : ce qu'un aidant
+// précis a le droit de faire sur un espace précis, daté et révocable.
+// La révocation des sessions / l'accès au journal décrits dans la spec
+// ne sont pas couverts ici — hors du périmètre de ce ticket (GET + expiration).
+model Mandate {
+  id       String @id @default(uuid())
+  spaceId  String
+  space    Space  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  helperId String
+  helper   Helper @relation("MandateHolder", fields: [helperId], references: [id], onDelete: Cascade)
+
+  // Enumerated capability codes (e.g. "contacts.gerer"), never a boolean
+  // "admin" flag. Not constrained to a closed Postgres enum yet: the full
+  // catalog isn't finalized, so this stays a validated-format string list.
+  scope     String[]
+  startDate DateTime
+  endDate   DateTime
+
+  revokedAt   DateTime?
+  revokedById String?
+  revokedBy   Helper?   @relation("MandateRevokedBy", fields: [revokedById], references: [id])
+
+  createdAt DateTime @default(now())
 }
