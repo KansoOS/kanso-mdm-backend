@@ -1,8 +1,11 @@
 import {ConflictException, Injectable} from '@nestjs/common';
 import {Prisma} from '@prisma/client';
+import {randomInt} from 'node:crypto';
+import {SecretCipherService} from '../auth/secret-cipher.service';
 import {PrismaService} from '../prisma/prisma.service';
 import {CreateSpaceDto} from './dto/create-space.dto';
 
+const PAIRING_CODE_TTL_MS = 15 * 60 * 1000;
 const SPACE_SELECT = {id: true, pseudonym: true, createdAt: true} as const;
 const DEVICE_SELECT = {
   id: true,
@@ -14,7 +17,10 @@ const DEVICE_SELECT = {
 
 @Injectable()
 export class SpacesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly secretCipher: SecretCipherService,
+  ) {}
 
   async create(helperId: string, dto: CreateSpaceDto) {
     return this.prisma.space.create({
@@ -146,5 +152,44 @@ export class SpacesService {
       data: {status: 'REVOKED'},
       select: DEVICE_SELECT,
     });
+  }
+
+  async createPairingCodeForHelper(
+    helperId: string,
+    spaceId: string,
+    deviceId: string,
+  ) {
+    const device = await this.prisma.device.findFirst({
+      where: {
+        id: deviceId,
+        spaceId,
+        status: 'PENDING',
+        space: {memberships: {some: {helperId}}},
+      },
+      select: {id: true},
+    });
+
+    if (!device) {
+      return null;
+    }
+
+    const code = randomInt(100000, 1000000).toString();
+    const expiresAt = new Date(Date.now() + PAIRING_CODE_TTL_MS);
+
+    const pairingCode = await this.prisma.$transaction(async tx => {
+      await tx.devicePairingCode.deleteMany({
+        where: {deviceId, usedAt: null},
+      });
+      return tx.devicePairingCode.create({
+        data: {
+          deviceId,
+          codeHash: this.secretCipher.hashPairingCode(code),
+          expiresAt,
+        },
+        select: {expiresAt: true},
+      });
+    });
+
+    return {code, expiresAt: pairingCode.expiresAt};
   }
 }

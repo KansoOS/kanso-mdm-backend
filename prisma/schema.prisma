@@ -90,5 +90,17 @@ model Device {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
+  pairingCodes DevicePairingCode[]
+
   @@unique([spaceId, pseudonym])
+}
+
+model DevicePairingCode {
+  id        String    @id @default(uuid())
+  deviceId  String
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  codeHash  String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 }
