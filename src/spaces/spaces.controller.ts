@@ -108,4 +108,21 @@ export class SpacesController {
     }
     return device;
   }
+
+  @Post(':spaceId/devices/:deviceId/pairing-code')
+  async createPairingCode(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+    @Param('deviceId') deviceId: string,
+  ) {
+    const pairingCode = await this.spacesService.createPairingCodeForHelper(
+      helperId,
+      spaceId,
+      deviceId,
+    );
+    if (!pairingCode) {
+      throw new NotFoundException('Pending device not found.');
+    }
+    return pairingCode;
+  }
 }

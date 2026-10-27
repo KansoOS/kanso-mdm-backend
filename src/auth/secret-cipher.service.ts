@@ -21,6 +21,7 @@ export class SecretCipherService {
   private readonly encryptionKey: Buffer;
   private readonly recoveryCodeHmacKey: Buffer;
   private readonly sessionTokenHmacKey: Buffer;
+  private readonly pairingCodeHmacKey: Buffer;
 
   constructor() {
     const masterKey = Buffer.from(
@@ -35,6 +36,7 @@ export class SecretCipherService {
     this.encryptionKey = deriveKey(masterKey, 'totp-secret-encryption');
     this.recoveryCodeHmacKey = deriveKey(masterKey, 'recovery-code-hmac');
     this.sessionTokenHmacKey = deriveKey(masterKey, 'session-token-hmac');
+    this.pairingCodeHmacKey = deriveKey(masterKey, 'device-pairing-code-hmac');
   }
 
   encrypt(plaintext: string): string {
@@ -78,6 +80,12 @@ export class SecretCipherService {
   hashSessionToken(rawToken: string): string {
     return createHmac('sha256', this.sessionTokenHmacKey)
       .update(rawToken)
+      .digest('hex');
+  }
+
+  hashPairingCode(code: string): string {
+    return createHmac('sha256', this.pairingCodeHmacKey)
+      .update(code)
       .digest('hex');
   }
 }
