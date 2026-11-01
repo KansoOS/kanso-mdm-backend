@@ -6,12 +6,15 @@ import {
   HttpStatus,
   NotFoundException,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import {HelperId} from '../auth/helper-id.decorator';
 import {SessionAuthGuard} from '../auth/session-auth.guard';
+import {CreateDeviceDto} from './dto/create-device.dto';
 import {CreateSpaceDto} from './dto/create-space.dto';
+import {UpdateDeviceDto} from './dto/update-device.dto';
 import {SpacesService} from './spaces.service';
 
 @Controller('spaces')
@@ -25,12 +28,101 @@ export class SpacesController {
     return this.spacesService.create(helperId, dto);
   }
 
-  @Get(':id')
-  async findOne(@HelperId() helperId: string, @Param('id') id: string) {
-    const space = await this.spacesService.findForHelper(helperId, id);
+  @Post(':spaceId/devices')
+  @HttpCode(HttpStatus.CREATED)
+  async createDevice(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+    @Body() dto: CreateDeviceDto,
+  ) {
+    const device = await this.spacesService.createDeviceForHelper(
+      helperId,
+      spaceId,
+      dto.pseudonym,
+    );
+    if (!device) {
+      throw new NotFoundException('Space not found.');
+    }
+    return device;
+  }
+
+  @Get(':spaceId')
+  async findOne(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+  ) {
+    const space = await this.spacesService.findForHelper(helperId, spaceId);
     if (!space) {
       throw new NotFoundException('Space not found.');
     }
     return space;
+  }
+
+  @Get(':spaceId/devices')
+  async findDevices(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+  ) {
+    const devices = await this.spacesService.findDevicesForHelper(
+      helperId,
+      spaceId,
+    );
+    if (!devices) {
+      throw new NotFoundException('Space not found.');
+    }
+    return devices;
+  }
+
+  @Patch(':spaceId/devices/:deviceId')
+  async updateDevice(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+    @Param('deviceId') deviceId: string,
+    @Body() dto: UpdateDeviceDto,
+  ) {
+    const device = await this.spacesService.updateDeviceForHelper(
+      helperId,
+      spaceId,
+      deviceId,
+      dto.pseudonym,
+    );
+    if (!device) {
+      throw new NotFoundException('Device not found.');
+    }
+    return device;
+  }
+
+  @Post(':spaceId/devices/:deviceId/revoke')
+  async revokeDevice(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+    @Param('deviceId') deviceId: string,
+  ) {
+    const device = await this.spacesService.revokeDeviceForHelper(
+      helperId,
+      spaceId,
+      deviceId,
+    );
+    if (!device) {
+      throw new NotFoundException('Device not found.');
+    }
+    return device;
+  }
+
+  @Post(':spaceId/devices/:deviceId/pairing-code')
+  async createPairingCode(
+    @HelperId() helperId: string,
+    @Param('spaceId') spaceId: string,
+    @Param('deviceId') deviceId: string,
+  ) {
+    const pairingCode = await this.spacesService.createPairingCodeForHelper(
+      helperId,
+      spaceId,
+      deviceId,
+    );
+    if (!pairingCode) {
+      throw new NotFoundException('Pending device not found.');
+    }
+    return pairingCode;
   }
 }
