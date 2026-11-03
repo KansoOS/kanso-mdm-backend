@@ -1,8 +1,13 @@
-import {Injectable} from '@nestjs/common';
+import {Injectable, NotFoundException} from '@nestjs/common';
 import {PrismaService} from '../prisma/prisma.service';
 import {CreateSpaceDto} from './dto/create-space.dto';
 
-const SPACE_SELECT = {id: true, pseudonym: true, createdAt: true} as const;
+const SPACE_SELECT = {
+  id: true,
+  pseudonym: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
 
 @Injectable()
 export class SpacesService {
@@ -16,6 +21,59 @@ export class SpacesService {
       },
       select: SPACE_SELECT,
     });
+  }
+
+  async createAdmin(pseudonym: string) {
+    return this.prisma.space.create({
+      data: {pseudonym: pseudonym.trim()},
+      select: SPACE_SELECT,
+    });
+  }
+
+  async listForHelper(helperId: string) {
+    return this.prisma.space.findMany({
+      where: {memberships: {some: {helperId}}},
+      orderBy: {createdAt: 'desc'},
+      select: SPACE_SELECT,
+    });
+  }
+
+  async listAdmin() {
+    return this.prisma.space.findMany({
+      orderBy: {createdAt: 'desc'},
+      include: {
+        _count: {
+          select: {
+            devices: true,
+            policies: true,
+            memberships: true,
+            mandates: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getAdmin(spaceId: string) {
+    const space = await this.prisma.space.findUnique({
+      where: {id: spaceId},
+      include: {
+        _count: {
+          select: {
+            devices: true,
+            policies: true,
+            memberships: true,
+            mandates: true,
+          },
+        },
+      },
+    });
+
+    if (!space) {
+      throw new NotFoundException('Space not found');
+    }
+
+    return space;
   }
 
   async findForHelper(helperId: string, spaceId: string) {

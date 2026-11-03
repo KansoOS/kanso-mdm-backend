@@ -1,0 +1,12 @@
+[
+  {
+    "eventId": "f19be3ac-35d0-45d4-955f-afb46eec0c49",
+    "type": "guidage.termine",
+    "occurredAt": "2026-11-03T06:51:52.468Z"
+  },
+  {
+    "eventId": "da6f6b70-5667-4f90-a19d-315f246801ec",
+    "type": "guidage.termine",
+    "occurredAt": "2026-11-03T06:52:25.374Z"
+  }
+]
