@@ -69,7 +69,7 @@ jobs:
     name: Pull image on test server
     needs: publish
 
-    runs-on: [self-hosted, linux, kanso-test]
+    runs-on: [self-hosted, Linux, X64]
     environment: test
 
     steps:
