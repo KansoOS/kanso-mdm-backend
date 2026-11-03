@@ -25,6 +25,11 @@ export class SpacesController {
     return this.spacesService.create(helperId, dto);
   }
 
+  @Get()
+  list(@HelperId() helperId: string) {
+    return this.spacesService.listForHelper(helperId);
+  }
+
   @Get(':id')
   async findOne(@HelperId() helperId: string, @Param('id') id: string) {
     const space = await this.spacesService.findForHelper(helperId, id);

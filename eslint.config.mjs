@@ -2,9 +2,10 @@
 // Google TypeScript Style (gts) + ajustements NestJS.
 import {createRequire} from 'node:module';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
 const require = createRequire(import.meta.url);
-const gts = require('gts/build/eslint.config.js');
+const gts = require('gts');
 
 export default [
   {
@@ -17,8 +18,17 @@ export default [
   },
   ...gts,
   {
+    files: ['**/*.ts'],
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+    },
     languageOptions: {
-      globals: {...globals.node, ...globals.jest},
+      parser: tseslint.parser,
+
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      },
       parserOptions: {
         project: './tsconfig.json',
         tsconfigRootDir: import.meta.dirname,
